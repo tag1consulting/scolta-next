@@ -1,0 +1,61 @@
+{
+  "name": "scolta-next",
+  "version": "1.0.0",
+  "description": "Scolta adapter for Next.js — AI-powered Pagefind search (with a gated Payload CMS module)",
+  "license": "MIT",
+  "author": "Tag1 Consulting <info@tag1.com>",
+  "homepage": "https://tag1.com",
+  "keywords": ["search", "ai", "pagefind", "nextjs", "payload"],
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./component": {
+      "types": "./dist/component/index.d.ts",
+      "import": "./dist/component/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "scolta-build": "./dist/cli.js"
+  },
+  "files": ["dist", "README.md", "CHANGELOG.md", "LICENSE"],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "scolta": "file:../scolta-node"
+  },
+  "peerDependencies": {
+    "next": ">=14",
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "payload": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.0",
+    "eslint": "^9.0.0",
+    "react": "^18.2.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^1.6.0"
+  }
+}
