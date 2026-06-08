@@ -45,10 +45,10 @@ export function ScoltaSearch(props: ScoltaSearchProps): JSX.Element {
     if (mounted.current) return;
     mounted.current = true;
     const base = assetsPath.replace(/\/$/, "");
-    (window as unknown as { scolta?: unknown }).scolta = buildWindowScolta(config, { assetsPath, pagefindPath });
+    (window as unknown as { scolta?: unknown }).scolta = buildWindowScolta(config, { assetsPath, pagefindPath, containerId });
     ensureStylesheet(`${base}/css/scolta.css`);
     ensureScript(`${base}/js/scolta.js`);
-  }, [config, assetsPath, pagefindPath]);
+  }, [config, assetsPath, pagefindPath, containerId]);
 
   return <div id={containerId} className={className} data-scolta-search="" />;
 }

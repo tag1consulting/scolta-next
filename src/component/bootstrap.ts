@@ -9,6 +9,8 @@ export interface BootstrapOptions {
   assetsPath?: string;
   /** Override the pagefind.js path (default derived from config). */
   pagefindPath?: string;
+  /** DOM id of the mount container (default scolta-search). */
+  containerId?: string;
 }
 
 export function buildWindowScolta(
@@ -19,8 +21,13 @@ export function buildWindowScolta(
   if (opts.pagefindPath) {
     result["pagefindPath"] = opts.pagefindPath;
   }
-  if (opts.assetsPath) {
-    result["wasmPath"] = `${opts.assetsPath.replace(/\/$/, "")}/wasm/`;
+  // scolta.js auto-init bails unless window.scolta.container names the mount
+  // point, and it loads WASM via `import(wasmPath)` where wasmPath must be the
+  // full glue-module path (…/wasm/scolta_core.js), not the directory. Mirror
+  // the Django/WP/Laravel adapters so the browser widget actually mounts.
+  result["container"] = `#${opts.containerId ?? "scolta-search"}`;
+  if (opts.assetsPath && !result["wasmPath"]) {
+    result["wasmPath"] = `${opts.assetsPath.replace(/\/$/, "")}/wasm/scolta_core.js`;
   }
   return result;
 }

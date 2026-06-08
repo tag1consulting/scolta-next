@@ -13,9 +13,14 @@ describe("buildWindowScolta", () => {
     expect(win["endpoints"]).toBeTruthy();
   });
 
-  it("overrides pagefindPath + derives wasmPath from assetsPath", () => {
+  it("names the mount container so scolta.js auto-init does not bail", () => {
+    expect(buildWindowScolta({})["container"]).toBe("#scolta-search");
+    expect(buildWindowScolta({}, { containerId: "my-box" })["container"]).toBe("#my-box");
+  });
+
+  it("overrides pagefindPath + derives wasmPath glue module from assetsPath", () => {
     const win = buildWindowScolta({ pagefindPath: "/pagefind/pagefind.js" }, { assetsPath: "/scolta/", pagefindPath: "/custom/pagefind.js" });
     expect(win["pagefindPath"]).toBe("/custom/pagefind.js");
-    expect(win["wasmPath"]).toBe("/scolta/wasm/");
+    expect(win["wasmPath"]).toBe("/scolta/wasm/scolta_core.js");
   });
 });
