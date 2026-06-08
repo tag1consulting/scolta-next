@@ -19,6 +19,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./payload": {
+      "types": "./dist/payload/index.d.ts",
+      "import": "./dist/payload/index.js",
+      "require": "./dist/payload/index.cjs"
+    },
     "./component": {
       "types": "./dist/component/index.d.ts",
       "import": "./dist/component/index.js"
