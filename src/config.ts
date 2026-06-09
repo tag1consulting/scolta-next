@@ -55,15 +55,18 @@ export class NextScoltaConfig {
   }
 
   /**
-   * Read adapter + AI config from environment, merged under an explicit object.
+   * Read adapter + AI config from environment, overlaid on an explicit object.
    * Honours SCOLTA_API_KEY / SCOLTA_AI_MODEL / SCOLTA_AI_PROVIDER / SCOLTA_AI_BASE_URL.
+   * Environment values win over the static config so a deployment can point AI at
+   * an explicit provider/key (e.g. SCOLTA_AI_PROVIDER=anthropic + SCOLTA_API_KEY)
+   * and skip the Amazee default.
    */
   static fromEnv(init: NextScoltaConfigInit = {}, env: NodeJS.ProcessEnv = process.env): NextScoltaConfig {
     const merged: NextScoltaConfigInit = { ...init };
-    if (env["SCOLTA_API_KEY"] && merged["ai_api_key"] === undefined) merged["ai_api_key"] = env["SCOLTA_API_KEY"];
-    if (env["SCOLTA_AI_MODEL"] && merged["ai_model"] === undefined) merged["ai_model"] = env["SCOLTA_AI_MODEL"];
-    if (env["SCOLTA_AI_PROVIDER"] && merged["ai_provider"] === undefined) merged["ai_provider"] = env["SCOLTA_AI_PROVIDER"];
-    if (env["SCOLTA_AI_BASE_URL"] && merged["ai_base_url"] === undefined) merged["ai_base_url"] = env["SCOLTA_AI_BASE_URL"];
+    if (env["SCOLTA_API_KEY"]) merged["ai_api_key"] = env["SCOLTA_API_KEY"];
+    if (env["SCOLTA_AI_MODEL"]) merged["ai_model"] = env["SCOLTA_AI_MODEL"];
+    if (env["SCOLTA_AI_PROVIDER"]) merged["ai_provider"] = env["SCOLTA_AI_PROVIDER"];
+    if (env["SCOLTA_AI_BASE_URL"]) merged["ai_base_url"] = env["SCOLTA_AI_BASE_URL"];
     return new NextScoltaConfig(merged);
   }
 

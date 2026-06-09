@@ -36,14 +36,16 @@ export interface ScoltaRouteHandlers {
 }
 
 function toResponse(result: ai.EndpointResult): Response {
+  // scolta.js reads the payload fields (terms/summary/response) directly off the
+  // response body, so success responses send the raw `data` (not an {ok,data}
+  // envelope) and failures send {error} — mirroring the Django/Laravel/Drupal
+  // controllers' response mapping exactly.
   if (result.ok) {
-    return Response.json({ ok: true, data: result.data ?? {} });
+    return Response.json(result.data ?? {});
   }
   const headers: Record<string, string> = {};
   if (result.retry_after) headers["Retry-After"] = result.retry_after;
-  const body: Record<string, unknown> = { ok: false, error: result.error };
-  if (result.limit !== undefined) body["limit"] = result.limit;
-  return Response.json(body, { status: result.status ?? 400, headers });
+  return Response.json({ error: result.error ?? "Error" }, { status: result.status ?? 500, headers });
 }
 
 async function readJson(req: Request): Promise<any> {
@@ -54,12 +56,25 @@ async function readJson(req: Request): Promise<any> {
   }
 }
 
+/**
+ * Default AI service: when the resolved provider is `amazee`, use the
+ * auto-provisioning {@link ai.AmazeeAiService} (free LiteLLM trial on first use,
+ * no key required) backed by a filesystem credential store under the state dir.
+ * Otherwise the plain {@link ai.AiServiceAdapter} (explicit key / framework AI).
+ */
+function defaultAiService(config: NextScoltaConfig): ai.AiServiceLike {
+  if (config.scolta.ai_provider === "amazee") {
+    return new ai.AmazeeAiService(config.scolta, new ai.FilesystemConfigStorage(config.stateDir));
+  }
+  return new ai.AiServiceAdapter(config.scolta);
+}
+
 /** Build the four Route Handlers from a resolved config. */
 export function createScoltaRouteHandlers(
   config: NextScoltaConfig,
   opts: ScoltaApiOptions = {},
 ): ScoltaRouteHandlers {
-  const aiService = opts.aiService ?? new ai.AiServiceAdapter(config.scolta);
+  const aiService = opts.aiService ?? defaultAiService(config);
   const handler = ai.createAiEndpointHandler(aiService, config.scolta, {
     cache: opts.cache ?? new NullCacheDriver(),
     generation: opts.generation ?? 0,

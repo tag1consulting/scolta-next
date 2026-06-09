@@ -132,29 +132,32 @@ describe("AI route handlers", () => {
     };
   }
 
-  it("expand-query returns ok + terms", async () => {
+  it("expand-query returns the raw terms payload (no {ok,data} envelope)", async () => {
+    // scolta.js reads `data.terms` straight off the body, so the route must send
+    // the unwrapped payload — matching the Django/Laravel/Drupal controllers.
     const config = NextScoltaConfig.fromObject({});
     const h = createScoltaRouteHandlers(config, { aiService: fakeService('["term1","term2","term3"]'), logger: silent });
     const res = await h.expandQuery(new Request("http://x/api/scolta/v1/expand-query", { method: "POST", body: JSON.stringify({ query: "test" }) }));
     expect(res.status).toBe(200);
     const json = await res.json();
-    expect(json.ok).toBe(true);
-    expect(json.data.terms).toEqual(["term1", "term2", "term3"]);
+    expect(json.ok).toBeUndefined();
+    expect(json.terms).toEqual(["term1", "term2", "term3"]);
   });
 
-  it("summarize returns ok + summary", async () => {
+  it("summarize returns the raw summary payload", async () => {
     const h = createScoltaRouteHandlers(NextScoltaConfig.fromObject({}), { aiService: fakeService("A summary."), logger: silent });
     const res = await h.summarize(new Request("http://x", { method: "POST", body: JSON.stringify({ query: "q", context: "some context here" }) }));
     const json = await res.json();
-    expect(json.data.summary).toBe("A summary.");
+    expect(json.summary).toBe("A summary.");
   });
 
-  it("followup enforces validation", async () => {
+  it("followup enforces validation and returns the raw response payload", async () => {
     const h = createScoltaRouteHandlers(NextScoltaConfig.fromObject({}), { aiService: fakeService("reply"), logger: silent });
     const bad = await h.followUp(new Request("http://x", { method: "POST", body: JSON.stringify({ messages: [] }) }));
     expect(bad.status).toBe(400);
+    expect((await bad.json()).error).toBeTruthy();
     const ok = await h.followUp(new Request("http://x", { method: "POST", body: JSON.stringify({ messages: [{ role: "user", content: "hi" }] }) }));
-    expect((await ok.json()).data.response).toBe("reply");
+    expect((await ok.json()).response).toBe("reply");
   });
 
   it("health reflects saved scoring config", async () => {
