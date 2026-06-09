@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Stop shipping a second copy of React: `react`/`react-dom` are peerDependencies
+  (provided by the consuming app), the redundant `react` devDependency is removed
+  (the build externalizes react and the tests don't import it; only
+  `@types/react` is needed locally), and a package `.npmrc` sets
+  `legacy-peer-deps=true` so `npm install` does not auto-install the peers here.
+  A `file:`-linked install of this package resolves through its real directory,
+  so a nested React would get bundled into the consumer alongside the app's own
+  React and break it (e.g. Next App Router client-component prerender failing with
+  "Cannot read properties of null (reading 'useContext')").
 - AI Route Handlers now send the raw payload (`{terms}` / `{summary}` /
   `{response}`) on success and `{error}` on failure, instead of an `{ok,data}`
   envelope — matching what `scolta.js` reads and the Django/Laravel/Drupal
