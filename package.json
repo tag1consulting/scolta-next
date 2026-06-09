@@ -41,7 +41,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "scolta": "file:../scolta-node"
+    "scolta": "^1.0.0"
   },
   "peerDependencies": {
     "next": ">=14",
