@@ -5,7 +5,20 @@
   "license": "MIT",
   "author": "Tag1 Consulting <info@tag1.com>",
   "homepage": "https://tag1.com",
-  "keywords": ["search", "ai", "pagefind", "nextjs", "payload"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tag1consulting/scolta-next.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tag1consulting/scolta-next/issues"
+  },
+  "keywords": [
+    "search",
+    "ai",
+    "pagefind",
+    "nextjs",
+    "payload"
+  ],
   "type": "module",
   "engines": {
     "node": ">=20"
@@ -15,36 +28,55 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./payload": {
-      "types": "./dist/payload/index.d.ts",
-      "import": "./dist/payload/index.js",
-      "require": "./dist/payload/index.cjs"
+      "import": {
+        "types": "./dist/payload/index.d.ts",
+        "default": "./dist/payload/index.js"
+      },
+      "require": {
+        "types": "./dist/payload/index.d.cts",
+        "default": "./dist/payload/index.cjs"
+      }
     },
     "./component": {
-      "types": "./dist/component/index.d.ts",
-      "import": "./dist/component/index.js"
+      "import": {
+        "types": "./dist/component/index.d.ts",
+        "default": "./dist/component/index.js"
+      }
     },
     "./package.json": "./package.json"
   },
   "bin": {
     "scolta-build": "./dist/cli.js"
   },
-  "files": ["dist", "README.md", "CHANGELOG.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && tsup --config tsup.component.config.ts",
     "test": "vitest run",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:publish": "publint && attw --pack . --exclude-entrypoints component"
   },
   "dependencies": {
     "scolta": "^1.0.0"
   },
   "peerDependencies": {
     "next": ">=14",
+    "payload": ">=3",
     "react": ">=18"
   },
   "peerDependenciesMeta": {
@@ -53,13 +85,30 @@
     }
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.3",
     "@eslint/js": "^9.0.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^20.11.0",
     "@types/react": "^18.2.0",
     "eslint": "^9.0.0",
+    "jsdom": "^29.1.1",
+    "publint": "^0.3.21",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
     "typescript-eslint": "^8.0.0",
     "vitest": "^1.6.0"
+  },
+  "typesVersions": {
+    "*": {
+      "payload": [
+        "./dist/payload/index.d.ts"
+      ],
+      "component": [
+        "./dist/component/index.d.ts"
+      ]
+    }
   }
 }

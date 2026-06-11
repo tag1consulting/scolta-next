@@ -71,6 +71,15 @@ npx scolta-build assets     # copy runtime assets into public/
 
 ## Auto-rebuild
 
-In `content` mode, `scoltaTracker.touch(key)` debounces a rebuild that reuses
-the token cache (gated on `autoRebuild`). Serverless deployments should trigger
-rebuilds via webhook/CI instead.
+In `content` mode, construct a `ScoltaTracker` and call `touch(key)` on
+content changes; it debounces a rebuild that reuses the token cache (gated on
+`autoRebuild`):
+
+```ts
+import { ScoltaTracker } from "scolta-next";
+
+const tracker = new ScoltaTracker(config, { rebuild: () => buildIndex(config, { source }) });
+tracker.touch("post:42");
+```
+
+Serverless deployments should trigger rebuilds via webhook/CI instead.
