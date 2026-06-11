@@ -160,8 +160,18 @@ describe("AI route handlers", () => {
     expect((await ok.json()).response).toBe("reply");
   });
 
-  it("health reflects saved scoring config", async () => {
+  it("health is status-only by default — monitors get 200, no diagnostics", async () => {
     const config = NextScoltaConfig.fromObject({ results_per_page: 17 });
+    const h = createScoltaRouteHandlers(config, { logger: silent });
+    const res = await h.health(new Request("http://x/api/scolta/v1/health"));
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(Object.keys(json)).toEqual(["status"]);
+    expect(["ok", "degraded"]).toContain(json.status);
+  });
+
+  it("health reflects saved scoring config when healthDetail is enabled", async () => {
+    const config = NextScoltaConfig.fromObject({ results_per_page: 17, healthDetail: true });
     const h = createScoltaRouteHandlers(config, { logger: silent });
     const res = await h.health(new Request("http://x/api/scolta/v1/health"));
     const json = await res.json();
