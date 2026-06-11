@@ -96,7 +96,14 @@ export function createScoltaRouteHandlers(
       return toResponse(await handler.handleFollowUp(Array.isArray(body.messages) ? body.messages : []));
     },
     health: async () => {
+      // The full report is always computed so the trimmed status still
+      // reflects degradation; without healthDetail every caller gets exactly
+      // {status} — enough for uptime monitors, nothing a public endpoint
+      // shouldn't expose.
       const report = await new HealthChecker(config.scolta, config.outputDir).check();
+      if (!config.healthDetail) {
+        return Response.json({ status: report.status });
+      }
       // Reflect SAVED config (Release Gate family 4), not auto-detected defaults.
       return Response.json({ ...report, scoring: config.scolta.toJsScoringConfig() });
     },

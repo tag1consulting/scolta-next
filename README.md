@@ -41,6 +41,14 @@ export const POST = h.expandQuery;
 
 …and likewise `summarize` / `followup` (POST) and `health` (GET).
 
+### Health endpoint
+
+`GET /health` returns `{"status": "ok"|"degraded"}` — enough for uptime
+monitors. The full diagnostic payload (provider, index state, scoring config)
+is exposed only with `healthDetail: true` in the adapter config. There is no
+user model in a headless stack, so detail is config-gated rather than
+auth-gated; enable it only where the endpoint is not publicly reachable.
+
 ## Search widget
 
 ```tsx

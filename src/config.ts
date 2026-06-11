@@ -27,6 +27,13 @@ export interface NextScoltaConfigInit extends Record<string, unknown> {
   autoRebuild?: boolean;
   /** Debounce window in milliseconds. */
   autoRebuildDelay?: number;
+  /**
+   * Expose the full diagnostic payload on GET /health. Default false: every
+   * caller gets {"status": ...} only — enough for uptime monitors. There is
+   * no user model in a headless stack, so detail is config-gated, not
+   * auth-gated; enable it only where the endpoint is not publicly reachable.
+   */
+  healthDetail?: boolean;
 }
 
 export class NextScoltaConfig {
@@ -38,6 +45,7 @@ export class NextScoltaConfig {
   readonly assetsPublicPath: string;
   readonly autoRebuild: boolean;
   readonly autoRebuildDelay: number;
+  readonly healthDetail: boolean;
 
   constructor(init: NextScoltaConfigInit = {}) {
     this.scolta = ScoltaConfig.fromObject(init);
@@ -48,6 +56,7 @@ export class NextScoltaConfig {
     this.assetsPublicPath = init.assetsPublicPath ?? "/scolta";
     this.autoRebuild = init.autoRebuild ?? false;
     this.autoRebuildDelay = init.autoRebuildDelay ?? 2000;
+    this.healthDetail = init.healthDetail ?? false;
   }
 
   static fromObject(init: NextScoltaConfigInit = {}): NextScoltaConfig {
