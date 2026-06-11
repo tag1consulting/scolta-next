@@ -48,12 +48,45 @@ function toResponse(result: ai.EndpointResult): Response {
   return Response.json({ error: result.error ?? "Error" }, { status: result.status ?? 500, headers });
 }
 
-async function readJson(req: Request): Promise<any> {
+/**
+ * Reject request bodies above this size before buffering them. The largest
+ * legitimate payload is handleSummarize's context, which the handler caps at
+ * 100k characters — but that check runs after the body is fully read, so the
+ * public POST handlers need a pre-buffering bound too.
+ */
+const MAX_BODY_BYTES = 1_000_000;
+
+/** Marker returned by {@link readJson} when Content-Length exceeds the cap. */
+const BODY_TOO_LARGE = Symbol("scolta-body-too-large");
+
+async function readJson(req: Request): Promise<unknown> {
+  const contentLength = Number(req.headers.get("content-length"));
+  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+    return BODY_TOO_LARGE;
+  }
   try {
-    return await req.json();
+    return (await req.json()) as unknown;
   } catch {
     return {};
   }
+}
+
+const TOO_LARGE_RESPONSE = () =>
+  Response.json({ error: "Request body too large" }, { status: 413 });
+
+/** Narrow an unknown JSON body to an object for per-field reads. */
+function asRecord(body: unknown): Record<string, unknown> {
+  return body !== null && typeof body === "object" && !Array.isArray(body)
+    ? (body as Record<string, unknown>)
+    : {};
+}
+
+/** Read a string field off a JSON body; non-string scalars stringify, the rest is "". */
+function fieldString(body: Record<string, unknown>, key: string): string {
+  const value = body[key];
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return "";
 }
 
 /**
@@ -84,16 +117,27 @@ export function createScoltaRouteHandlers(
 
   return {
     expandQuery: async (req) => {
-      const body = await readJson(req);
-      return toResponse(await handler.handleExpandQuery(String(body.query ?? "")));
+      const raw = await readJson(req);
+      if (raw === BODY_TOO_LARGE) return TOO_LARGE_RESPONSE();
+      const body = asRecord(raw);
+      return toResponse(await handler.handleExpandQuery(fieldString(body, "query")));
     },
     summarize: async (req) => {
-      const body = await readJson(req);
-      return toResponse(await handler.handleSummarize(String(body.query ?? ""), String(body.context ?? "")));
+      const raw = await readJson(req);
+      if (raw === BODY_TOO_LARGE) return TOO_LARGE_RESPONSE();
+      const body = asRecord(raw);
+      return toResponse(
+        await handler.handleSummarize(fieldString(body, "query"), fieldString(body, "context")),
+      );
     },
     followUp: async (req) => {
-      const body = await readJson(req);
-      return toResponse(await handler.handleFollowUp(Array.isArray(body.messages) ? body.messages : []));
+      const raw = await readJson(req);
+      if (raw === BODY_TOO_LARGE) return TOO_LARGE_RESPONSE();
+      const body = asRecord(raw);
+      const messages = body["messages"];
+      return toResponse(
+        await handler.handleFollowUp(Array.isArray(messages) ? (messages as ai.ChatMessage[]) : []),
+      );
     },
     health: async () => {
       // The full report is always computed so the trimmed status still

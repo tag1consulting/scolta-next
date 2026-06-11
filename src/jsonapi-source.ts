@@ -18,7 +18,7 @@ import { CachedContentReference, type EnumeratedContent, type NextContentSource 
 
 export interface JsonApiResource {
   id: string;
-  attributes: Record<string, any>;
+  attributes: Record<string, unknown>;
 }
 
 export interface JsonApiSourceOptions {
@@ -34,15 +34,50 @@ export interface JsonApiSourceOptions {
   mapResource?: (resource: JsonApiResource) => ContentItem;
 }
 
+/** Read a nested attribute (`body.processed`-style) without trusting its shape. */
+function attr(value: unknown, key: string): unknown {
+  if (value !== null && typeof value === "object" && key in value) {
+    return (value as Record<string, unknown>)[key];
+  }
+  return undefined;
+}
+
+function asString(value: unknown, fallback = ""): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  return fallback;
+}
+
+/**
+ * Validate a mapped URL path: it must be site-relative (leading `/`) and free
+ * of `..` segments. The scolta binding's exporter also refuses to write
+ * outside its output dir; rejecting here names the offending resource while
+ * the remote data is still in hand (defense in depth above that containment).
+ */
+export function validateResourceUrl(url: string, resourceId: string): string {
+  const hasTraversal = url.split(/[\\/]/).includes("..");
+  if (!url.startsWith("/") || hasTraversal) {
+    throw new Error(
+      `JSON:API resource "${resourceId}" mapped to unsafe URL ${JSON.stringify(url)}: ` +
+        "URLs must start with '/' and must not contain '..' segments. " +
+        "Adjust mapResource for your content model.",
+    );
+  }
+  return url;
+}
+
 function defaultMap(resource: JsonApiResource): ContentItem {
   const a = resource.attributes;
+  const body = a["body"];
+  const path = a["path"];
+  const url = asString(attr(path, "alias")) || asString(a["url"]) || `/node/${resource.id}`;
   return new ContentItem({
     id: String(resource.id),
-    title: String(a["title"] ?? ""),
-    bodyHtml: String(a["body"]?.processed ?? a["body"]?.value ?? a["body"] ?? ""),
-    url: String(a["path"]?.alias ?? a["url"] ?? `/node/${resource.id}`),
-    date: String(a["created"] ?? ""),
-    language: String(a["langcode"] ?? "en"),
+    title: asString(a["title"]),
+    bodyHtml: asString(attr(body, "processed")) || asString(attr(body, "value")) || asString(body),
+    url: validateResourceUrl(url, String(resource.id)),
+    date: asString(a["created"]),
+    language: asString(a["langcode"], "en") || "en",
   });
 }
 
@@ -63,7 +98,10 @@ export class JsonApiContentSource implements NextContentSource {
       for (const resource of doc.data ?? []) {
         const item = map(resource);
         const changedRaw = resource.attributes["changed"] ?? resource.attributes["created"];
-        const changedMs = changedRaw ? Date.parse(String(changedRaw)) : NaN;
+        const changedMs =
+          typeof changedRaw === "string" || typeof changedRaw === "number"
+            ? Date.parse(String(changedRaw))
+            : NaN;
         if (this.options.changedSince !== undefined && !Number.isNaN(changedMs) && changedMs < this.options.changedSince) {
           // Unchanged → cache reference (cheap, no body re-tokenization).
           yield new CachedContentReference(
