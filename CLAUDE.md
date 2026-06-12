@@ -8,7 +8,10 @@ in `scolta` and is shared. If you find yourself porting binding logic here, stop
 
 - Server surface: `scolta-next`. Client component: `scolta-next/component`
   (carries "use client"). Gated CMS module: `scolta-next/payload`.
-- `scolta` is a `file:` dependency; build it (`npm run build` in scolta-node)
-  before installing here so its `dist` resolves.
+- `scolta` resolves from the npm registry (the lock must stay
+  registry-resolved — a `link:` entry breaks CI installs). For local
+  development against the sibling, build scolta-node and symlink manually:
+  `ln -s ../../scolta-node node_modules/scolta` (any npm install/ci replaces
+  it; re-create afterwards).
 - No AI attribution anywhere. Tests are vitest; Route Handlers are tested
   directly against Web `Request`/`Response` (no Next runtime needed).
