@@ -25,8 +25,9 @@ async function loadConfigObject(cwd: string): Promise<NextScoltaConfigInit> {
   for (const name of ["scolta.config.mjs", "scolta.config.js"]) {
     const p = path.join(cwd, name);
     try {
-      const mod = await import(pathToFileURL(p).href);
-      const obj = mod.default ?? mod.config ?? mod;
+      const mod: unknown = await import(pathToFileURL(p).href);
+      const m = mod as { default?: unknown; config?: unknown };
+      const obj = m.default ?? m.config ?? mod;
       if (obj && typeof obj === "object") return obj as NextScoltaConfigInit;
     } catch {
       // Not present / not importable — fall through to env-only.

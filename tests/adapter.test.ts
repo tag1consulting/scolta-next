@@ -41,7 +41,7 @@ describe("config round-trip (Release Gate family 4)", () => {
   });
 
   it("fromEnv reads SCOLTA_API_KEY without clobbering explicit values", () => {
-    const config = NextScoltaConfig.fromEnv({ ai_model: "claude-x" }, { SCOLTA_API_KEY: "sk-env" } as any);
+    const config = NextScoltaConfig.fromEnv({ ai_model: "claude-x" }, { SCOLTA_API_KEY: "sk-env" });
     expect(config.scolta.ai_api_key).toBe("sk-env");
     expect(config.scolta.ai_model).toBe("claude-x");
   });
@@ -177,6 +177,57 @@ describe("AI route handlers", () => {
     const json = await res.json();
     expect(json.scoring.RESULTS_PER_PAGE).toBe(17);
     expect(json.aiConfigured).toBe(false);
+  });
+});
+
+describe("request-body size cap", () => {
+  it("rejects an oversized Content-Length with 413 before buffering", async () => {
+    const h = createScoltaRouteHandlers(NextScoltaConfig.fromObject({}), { logger: silent });
+    const res = await h.summarize(
+      new Request("http://x", {
+        method: "POST",
+        headers: { "content-length": String(50_000_000) },
+        body: JSON.stringify({ query: "q", context: "ctx" }),
+      }),
+    );
+    expect(res.status).toBe(413);
+    expect((await res.json()).error).toMatch(/too large/i);
+  });
+
+  it("accepts a normally sized body", async () => {
+    const h = createScoltaRouteHandlers(NextScoltaConfig.fromObject({}), { logger: silent });
+    // No AI key configured -- expand degrades gracefully but is NOT a 413.
+    const res = await h.expandQuery(
+      new Request("http://x", { method: "POST", body: JSON.stringify({ query: "test" }) }),
+    );
+    expect(res.status).not.toBe(413);
+  });
+});
+
+describe("JSON:API URL validation (defense in depth)", () => {
+  function sourceFor(attributes: Record<string, unknown>) {
+    const page = { data: [{ id: "1", attributes }] };
+    const fetchImpl = (async () =>
+      new Response(JSON.stringify(page), { status: 200 })) as unknown as typeof fetch;
+    return new JsonApiContentSource({ endpoint: "http://drupal/jsonapi/node/article", fetchImpl });
+  }
+
+  it("rejects a traversal alias from remote data", async () => {
+    const src = sourceFor({ title: "Evil", body: "<p>x</p>", path: { alias: "/../../etc/evil" } });
+    await expect(async () => {
+      for await (const _item of src.enumerate()) {
+        // consume
+      }
+    }).rejects.toThrow(/unsafe URL/);
+  });
+
+  it("rejects a non-relative url", async () => {
+    const src = sourceFor({ title: "Evil", body: "<p>x</p>", url: "https://attacker.example/x" });
+    await expect(async () => {
+      for await (const _item of src.enumerate()) {
+        // consume
+      }
+    }).rejects.toThrow(/unsafe URL/);
   });
 });
 

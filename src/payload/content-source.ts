@@ -56,7 +56,8 @@ export class PayloadContentSource implements NextContentSource {
   }
 
   async *enumerate(): AsyncGenerator<EnumeratedContent> {
-    const serialize = this.options.serializer ?? lexicalToHtml;
+    const serialize: (richText: unknown) => string =
+      this.options.serializer ?? (lexicalToHtml as (richText: unknown) => string);
     const language = this.options.language ?? "en";
     const pageSize = this.options.pageSize ?? 100;
 
