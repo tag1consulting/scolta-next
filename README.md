@@ -28,6 +28,11 @@ Set `source` in your config:
     `JsonApiContentSource` is a documented worked example (a `fetch`-based async
     iterable over a Drupal JSON:API endpoint with a `changed-since` check).
 
+## Configuration
+
+Config options are the shared binding's — the full reference is
+[`scolta`'s CONFIG_REFERENCE](../scolta-node/docs/CONFIG_REFERENCE.md).
+
 ## AI endpoints
 
 Mount the ready-made Route Handlers at the exact paths `scolta.js` defaults to:
