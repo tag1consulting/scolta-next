@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Document where config options are defined: link the binding's
+  CONFIG_REFERENCE from the README (new `## Configuration` section).
+
 ## [1.0.1] - 2026-06-12
 
 ### Fixed
