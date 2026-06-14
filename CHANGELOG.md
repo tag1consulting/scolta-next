@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Pack-content guard in CI** (`check:pack`). Asserts every path in
+  `npm pack --dry-run --json` matches an allowlist derived from package.json's
+  own `files` field (plus the always-included `package.json`), and that the
+  unpacked size stays under a ~2x cap of the measured good artifact
+  (229,689 bytes → 460,000-byte cap). The `files` field is already a
+  fail-closed publish allowlist; this is the regression test that keeps it
+  true. Failures print the leaked path and point at the filter. Runs locally
+  via `npm run check:pack`.
+
 ### Changed
 
 - Document where config options are defined: link the binding's

@@ -69,7 +69,8 @@
     "test": "vitest run",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "check:publish": "publint && attw --pack . --exclude-entrypoints component"
+    "check:publish": "publint && attw --pack . --exclude-entrypoints component",
+    "check:pack": "node scripts/check-pack-content.mjs"
   },
   "dependencies": {
     "scolta": "^1.0.0"
