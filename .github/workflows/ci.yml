@@ -29,3 +29,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run check:publish
+      # Regression guard: assert `npm pack` ships nothing outside the allowlist
+      # derived from package.json's `files` field, and stays under the size cap.
+      # Runs after build so dist/ exists for the pack dry-run.
+      - run: npm run check:pack

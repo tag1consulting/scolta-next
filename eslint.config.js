@@ -25,6 +25,14 @@ export default tseslint.config(
     ...tseslint.configs.disableTypeChecked,
   },
   {
+    // CI/maintenance scripts run under Node; expose the Node globals they use
+    // so `no-undef` does not flag them.
+    files: ["scripts/**/*.mjs"],
+    languageOptions: {
+      globals: { process: "readonly", console: "readonly" },
+    },
+  },
+  {
     rules: {
       "@typescript-eslint/no-unused-vars": [
         "error",
