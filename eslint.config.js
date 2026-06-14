@@ -3,7 +3,10 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["dist/**", "node_modules/**", "examples/**", "coverage/**"],
+    // `scolta-node-src/**` is the sibling binding CI checks out and builds to
+    // resolve the unreleased `scolta` (see .github/workflows/ci.yml); it is not
+    // this package's source and is linted by its own repo.
+    ignores: ["dist/**", "node_modules/**", "examples/**", "coverage/**", "scolta-node-src/**"],
   },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,

@@ -23,7 +23,33 @@ jobs:
       # the exact npm that generated the lockfiles so the validator always
       # matches the generator; bump both together, deliberately.
       - run: npm install -g npm@11.17.0
+      # Resolve `scolta` to the unreleased node binding fix. The published
+      # registry pin is still 1.0.0, whose CJS entry crashes at require()
+      # (the import.meta-in-CJS defect) — that is exactly what the cjs-build
+      # regression test guards, but its skipIf goes TRUE on 1.0.0 and the test
+      # never runs. Build node `main` (1.0.1, fixed) and link it as the
+      # workspace `scolta`, mirroring the documented local dev pattern
+      # (`ln -s ../../scolta-node node_modules/scolta`). The lockfile stays
+      # registry-resolved (a `link:` entry would break `npm ci`); the symlink
+      # is applied after `npm ci`, which would otherwise restore the 1.0.0 pin.
+      # Drop this once scolta-node 1.0.1 is published and the dep floor is
+      # bumped to `^1.0.1` (TS release track).
+      - uses: actions/checkout@v5
+        with:
+          repository: tag1consulting/scolta-node
+          ref: main
+          path: scolta-node-src
+      - name: Build scolta-node (the binding under test)
+        working-directory: scolta-node-src
+        run: |
+          npm ci
+          npm run build
       - run: npm ci
+      - name: Link `scolta` to the built node main
+        run: |
+          rm -rf node_modules/scolta
+          ln -s "$GITHUB_WORKSPACE/scolta-node-src" node_modules/scolta
+          node -e "console.log('scolta resolves to', require('scolta/package.json').version)"
       - run: npm run build
       - run: npm test
       - run: npm run typecheck
