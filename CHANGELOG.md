@@ -17,6 +17,18 @@
 
 - Document where config options are defined: link the binding's
   CONFIG_REFERENCE from the README (new `## Configuration` section).
+- **The CJS regression test now actually runs in CI.** The direct-invoke case
+  in `tests/cjs-build.test.ts` is `skipIf`-gated on the resolved `scolta`
+  version (the binding's CJS `require()` crash is only fixed in scolta
+  ≥ 1.0.1), but CI installed the registry `scolta@1.0.0` and the guard went
+  TRUE — so the test this package carries for the silent-no-op bug never
+  executed and CI was green without exercising it. CI now checks out
+  scolta-node `main` (the unreleased 1.0.1 fix), builds it, and links it as the
+  workspace `scolta` after `npm ci` (the lockfile stays registry-resolved, per
+  the no-`link:` rule), so the guard is false and the test runs. The `skipIf`
+  is kept as a genuine capability guard; this dev-resolution link is dropped
+  once scolta-node 1.0.1 is published and the dep floor rises to `^1.0.1`
+  (TS release track).
 
 ## [1.0.1] - 2026-06-12
 
