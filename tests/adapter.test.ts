@@ -229,6 +229,33 @@ describe("JSON:API URL validation (defense in depth)", () => {
       }
     }).rejects.toThrow(/unsafe URL/);
   });
+
+  it("rejects a traversal url from a custom mapResource (not only the default map)", async () => {
+    // Field mapping is documented as site-specific, so a custom `mapResource`
+    // is the common case — it must not be able to bypass the URL guard. A
+    // traversal path survives ContentItem URL normalization (only scheme/host
+    // are stripped), so it reaches the exporter unless validated here.
+    const page = { data: [{ id: "1", attributes: { title: "Evil" } }] };
+    const fetchImpl = (async () =>
+      new Response(JSON.stringify(page), { status: 200 })) as unknown as typeof fetch;
+    const src = new JsonApiContentSource({
+      endpoint: "http://drupal/jsonapi/node/article",
+      fetchImpl,
+      mapResource: (resource) =>
+        new ContentItem({
+          id: String(resource.id),
+          title: "Evil",
+          bodyHtml: "<p>x</p>",
+          url: "/../../etc/evil",
+          date: "2026-01-01T00:00:00Z",
+        }),
+    });
+    await expect(async () => {
+      for await (const _item of src.enumerate()) {
+        // consume
+      }
+    }).rejects.toThrow(/unsafe URL/);
+  });
 });
 
 describe("JSON:API content source (worked example)", () => {

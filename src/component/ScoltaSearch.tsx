@@ -8,7 +8,7 @@
  * here — that is `scolta-core` (WASM) + `scolta.js`.
  */
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type JSX } from "react";
 import { buildWindowScolta, type BootstrapOptions } from "./bootstrap.js";
 
 export interface ScoltaSearchProps extends BootstrapOptions {

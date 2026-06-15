@@ -97,6 +97,14 @@ export class JsonApiContentSource implements NextContentSource {
       const doc = (await res.json()) as { data: JsonApiResource[]; links?: { next?: { href: string } } };
       for (const resource of doc.data ?? []) {
         const item = map(resource);
+        // Validate the mapped URL for ALL maps, not only `defaultMap` — a custom
+        // `mapResource` (the common case, since field mapping is site-specific)
+        // would otherwise bypass the guard entirely. `defaultMap` keeps its own
+        // pre-normalization check so it still rejects absolute/non-relative URLs;
+        // here we re-check the normalized `item.url`, which catches the traversal
+        // segments that survive ContentItem normalization (only scheme/host are
+        // stripped) for every map.
+        validateResourceUrl(item.url, item.id);
         const changedRaw = resource.attributes["changed"] ?? resource.attributes["created"];
         const changedMs =
           typeof changedRaw === "string" || typeof changedRaw === "number"

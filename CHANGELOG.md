@@ -29,6 +29,25 @@
   is kept as a genuine capability guard; this dev-resolution link is dropped
   once scolta-node 1.0.1 is published and the dep floor rises to `^1.0.1`
   (TS release track).
+- Align the React type packages with the React 19 runtime: `@types/react` and
+  `@types/react-dom` move to the `^19` line, matching the `react`/`react-dom` 19
+  the build and jsdom test already resolve. `@types/react-dom` is now a direct
+  devDependency (previously only a transitive optional peer). React 19 scopes
+  the global `JSX` namespace into the `react` module, so the client component
+  imports `type JSX` from `react`.
+
+### Fixed
+
+- **JSON:API resource-URL validation now runs for custom `mapResource`
+  implementations, not only the default map.** The hostile-alias / non-relative
+  URL guard (`validateResourceUrl`) was invoked only inside `defaultMap`, so any
+  consumer supplying `options.mapResource` (the common case — field mapping is
+  site-specific) silently lost the defense, and CI stayed green because the
+  existing tests exercised only the default map. `enumerate()` now validates
+  every mapped item's URL, so traversal segments are rejected regardless of
+  which map produced the item. `defaultMap` keeps its own pre-normalization
+  check, which also rejects absolute/non-relative URLs before they are
+  normalized to a path.
 
 ## [1.0.1] - 2026-06-12
 
