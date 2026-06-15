@@ -26,6 +26,14 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
+      # Publish-surface guards — the same gate ci.yml runs on every PR, run here
+      # too so the published tarball is checked at the moment that actually
+      # ships it: `check:publish` (publint + are-the-types-wrong) validates the
+      # publish shape, `check:pack` asserts `npm pack` stays inside the `files`
+      # allowlist and under the size cap. Without these a tagged commit could
+      # publish a tarball the PR gate would have rejected.
+      - run: npm run check:publish
+      - run: npm run check:pack
       # Provenance is automatic under OIDC. Token fallback: set NODE_AUTH_TOKEN
       # from a granular automation token secret instead of the OIDC exchange.
       - run: npm publish
