@@ -17,6 +17,13 @@
 
 - Document where config options are defined: link the binding's
   CONFIG_REFERENCE from the README (new `## Configuration` section).
+- **The release workflow now runs the publish-surface guards before
+  `npm publish` (`.github/workflows/release.yml`).** `check:publish` (publint +
+  are-the-types-wrong) and `check:pack` (pack-content allowlist + size cap)
+  gated only `ci.yml` on PRs, never the release workflow that actually
+  publishes — so a tagged commit could ship a tarball the PR gate would have
+  rejected. Both now run after `build`/`test` and before `npm publish`, gating
+  the published tarball the same way CI gates PRs.
 - **The CJS regression test now actually runs in CI.** The direct-invoke case
   in `tests/cjs-build.test.ts` is `skipIf`-gated on the resolved `scolta`
   version (the binding's CJS `require()` crash is only fixed in scolta
