@@ -21,8 +21,9 @@ jobs:
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
-      # Trusted Publishing needs npm >= 11.5.1; runner images may bundle older.
-      - run: npm install -g npm@latest
+      # Pin npm to match ci.yml (the version the lockfile + check:pack were
+      # validated against); also satisfies Trusted Publishing's npm >= 11.5.1.
+      - run: npm install -g npm@11.17.0
       - run: npm ci
       - run: npm run build
       - run: npm test
