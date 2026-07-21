@@ -1,6 +1,6 @@
 {
   "name": "scolta-next",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Scolta adapter for Next.js — AI-powered Pagefind search (with a gated Payload CMS module)",
   "license": "MIT",
   "author": "Tag1 Consulting <info@tag1.com>",

@@ -15,6 +15,8 @@
   in the cwd where `scolta-build` runs and only falls back to the module-relative
   copy. Added a resolver unit test asserting project resolution wins.
 
+## [1.0.1] - 2026-07-10
+
 ### Added
 
 - **Pack-content guard in CI** (`check:pack`). Asserts every path in
@@ -25,6 +27,18 @@
   fail-closed publish allowlist; this is the regression test that keeps it
   true. Failures print the leaked path and point at the filter. Runs locally
   via `npm run check:pack`.
+- **Widget-mount smoke test** — rendering `<ScoltaSearch>` under jsdom now
+  asserts the container div mounts, the stylesheet/script tags inject with
+  the right URLs, and the emitted `window.scolta` carries `container` + a
+  `wasmPath` ending in the WASM glue module (nothing previously exercised
+  the `useEffect`/DOM path).
+- **CI and tag-triggered releases.** `.github/workflows/ci.yml` (PRs + main;
+  Node 20/22 matrix; `npm ci`, build, test, typecheck, lint,
+  `check:publish`) and `.github/workflows/release.yml` (`v*.*.*` tags publish
+  to npm via OIDC Trusted Publishing — no long-lived token, automatic
+  provenance).
+- **Publish-shape gate.** `check:publish` runs publint +
+  `@arethetypeswrong/cli`; part of the local and CI gates.
 
 ### Changed
 
@@ -55,6 +69,21 @@
   devDependency (previously only a transitive optional peer). React 19 scopes
   the global `JSX` namespace into the `react` module, so the client component
   imports `type JSX` from `react`.
+- **The health Route Handler now returns status-only by default.**
+  `GET /api/scolta/v1/health` previously exposed the full diagnostic payload
+  (AI provider, configured flags, index state, scoring config) to every
+  caller. Monitoring endpoints keep working: the handler still answers HTTP
+  200 with `{"status": "ok"|"degraded"}`, computed from the full report so
+  degradation stays visible. The detail moved behind the new `healthDetail`
+  adapter config option (default `false`); there is no user model in a
+  headless stack, so detail is config-gated rather than auth-gated. Matches
+  the status-only anonymous shape of the PHP-family and Django adapters.
+- eslint moved to `recommendedTypeChecked`; `noImplicitOverride` enabled;
+  documented scoped exceptions (tests' unsafe-any family; Payload doc-shape
+  `any` as deliberate public-API ergonomics).
+- vitest 1.6 -> 3.2.6 (dev-only; pulls vite 7 / patched esbuild for the
+  GHSA-67mh-4wv8-2f99 dev-server advisory).
+- package metadata: `repository`/`bugs` fields added.
 
 ### Fixed
 
@@ -68,11 +97,6 @@
   which map produced the item. `defaultMap` keeps its own pre-normalization
   check, which also rejects absolute/non-relative URLs before they are
   normalized to a path.
-
-## [1.0.1] - 2026-06-12
-
-### Fixed
-
 - **The CJS CLI was a silent no-op; `"use client"` was missing from the
   published component.** Two artifact-level breakages with one root-cause
   family each:
@@ -94,8 +118,8 @@
     entry).
 - **`bin[scolta-build]` publish warning** — npm "cleaned" the bin value's
   `./` prefix at every publish; normalized via `npm pkg fix`
-  (`./dist/cli.js` → `dist/cli.js`). `npm publish --dry-run` is now
-  warning-free.
+  (`./dist/cli.js` → `dist/cli.js`). `npm publish --dry-run` no longer
+  warns.
 - **Public POST surface hardened.** `readJson` returned `any`; it now
   returns `unknown` with per-handler narrowing, and bodies whose
   Content-Length exceeds 1 MB are rejected with a 413 *before* buffering —
@@ -113,39 +137,6 @@
   `peerDependenciesMeta.optional` was a no-op without it. README tracker
   usage corrected (there is no `scoltaTracker` singleton; construct
   `ScoltaTracker`).
-
-### Changed
-
-- **The health Route Handler now returns status-only by default.**
-  `GET /api/scolta/v1/health` previously exposed the full diagnostic payload
-  (AI provider, configured flags, index state, scoring config) to every
-  caller. Monitoring endpoints keep working: the handler still answers HTTP
-  200 with `{"status": "ok"|"degraded"}`, computed from the full report so
-  degradation stays visible. The detail moved behind the new `healthDetail`
-  adapter config option (default `false`); there is no user model in a
-  headless stack, so detail is config-gated rather than auth-gated. Matches
-  the status-only anonymous shape of the PHP-family and Django adapters.
-- eslint moved to `recommendedTypeChecked`; `noImplicitOverride` enabled;
-  documented scoped exceptions (tests' unsafe-any family; Payload doc-shape
-  `any` as deliberate public-API ergonomics).
-- vitest 1.6 -> 3.2.6 (dev-only; pulls vite 7 / patched esbuild for the
-  GHSA-67mh-4wv8-2f99 dev-server advisory).
-- package metadata: `repository`/`bugs` fields added.
-
-### Added
-
-- **Widget-mount smoke test** — rendering `<ScoltaSearch>` under jsdom now
-  asserts the container div mounts, the stylesheet/script tags inject with
-  the right URLs, and the emitted `window.scolta` carries `container` + a
-  `wasmPath` ending in the WASM glue module (nothing previously exercised
-  the `useEffect`/DOM path).
-- **CI and tag-triggered releases.** `.github/workflows/ci.yml` (PRs + main;
-  Node 20/22 matrix; `npm ci`, build, test, typecheck, lint,
-  `check:publish`) and `.github/workflows/release.yml` (`v*.*.*` tags publish
-  to npm via OIDC Trusted Publishing — no long-lived token, automatic
-  provenance).
-- **Publish-shape gate.** `check:publish` runs publint +
-  `@arethetypeswrong/cli`; part of the local and CI gates.
 
 ## [1.0.0] - 2026-06-09
 
@@ -167,9 +158,9 @@
   envelope — matching what `scolta.js` reads and the Django/Laravel/Drupal
   controllers emit. (Previously the widget received the data nested under
   `data`, so AI overviews and expansion chips never rendered.)
-- Default the AI service to the auto-provisioning `AmazeeAiService` when the
-  resolved provider is `amazee` (free LiteLLM trial, no key required), backed by
-  a filesystem credential store under the state dir.
+- Default the AI service to the auto-configuring `AmazeeAiService` when the
+  resolved provider is `amazee` (managed LiteLLM endpoint via Amazee.ai, no key
+  required), backed by a filesystem credential store under the state dir.
 - `fromEnv` now lets `SCOLTA_AI_PROVIDER` / `SCOLTA_API_KEY` / `SCOLTA_AI_MODEL`
   / `SCOLTA_AI_BASE_URL` override the static config, so a deployment can point AI
   at an explicit provider/key and bypass the Amazee default.
