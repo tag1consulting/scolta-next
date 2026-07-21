@@ -2,6 +2,19 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **`scolta-build assets` now copies the consuming project's `scolta` runtime
+  assets, not this adapter's nested copy.** `resolveScoltaAssetsDir` resolved
+  `scolta/package.json` relative to the CLI module's own location, so when the
+  adapter carried its own nested `node_modules/scolta` (it always does — `scolta`
+  is a dependency), the resolver found the adapter-nested version instead of the
+  project's. If the two installs were at different versions, `scolta-build
+  assets` silently copied stale WASM/JS into the site even when the project
+  itself was on the right version. Resolution now prefers the `scolta` installed
+  in the cwd where `scolta-build` runs and only falls back to the module-relative
+  copy. Added a resolver unit test asserting project resolution wins.
+
 ## [1.0.1] - 2026-07-10
 
 ### Added
