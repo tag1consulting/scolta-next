@@ -90,10 +90,19 @@ function fieldString(body: Record<string, unknown>, key: string): string {
 }
 
 /**
- * Default AI service: when the resolved provider is `amazee`, use the
- * auto-provisioning {@link ai.AmazeeAiService} (free LiteLLM trial on first use,
- * no key required) backed by a filesystem credential store under the state dir.
- * Otherwise the plain {@link ai.AiServiceAdapter} (explicit key / framework AI).
+ * Default AI service, selected by the provider the developer configured.
+ *
+ * **This branch is the Amazee opt-in.** There is no admin UI here, so setting
+ * `ai_provider` to `amazee` in code or env is the manual choice that permits
+ * {@link ai.AmazeeAiService} to establish the free LiteLLM demo connection on
+ * first use, backed by a filesystem credential store under the state dir.
+ * Anything else — a provider unset, `anthropic`, `openai` — takes the plain
+ * {@link ai.AiServiceAdapter} (explicit key / framework AI), which never
+ * touches Amazee: no credential is provisioned and no outbound Amazee call is
+ * made on any request path.
+ *
+ * With no provider selected at all, `AiServiceAdapter` builds no client and AI
+ * is simply off — search still works. There is no default provider.
  */
 function defaultAiService(config: NextScoltaConfig): ai.AiServiceLike {
   if (config.scolta.ai_provider === "amazee") {
