@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+- **The Amazee.ai branch is documented and tested as an opt-in gate, not as a default (`src/route-handlers.ts`, `src/config.ts`).** The docstring on `defaultAiService()` described the Amazee path as an "auto-provisioning" service giving a "free LiteLLM trial on first use, no key required", and `fromEnv()`'s described setting an explicit provider as a way to "skip the Amazee default" — three phrases for a behaviour that is not the policy and, after the core change, is not the code either. **There is no default provider and Amazee is not one.** With `ai_provider` unset, AI features are off: search works, no provider is assumed, and Anthropic in particular is not silently assumed. Because a code-config framework has no admin UI, setting `ai_provider` to `amazee` **is** the manual opt-in — the same act as clicking "Try the demo" in a CMS admin — and it is what permits the Amazee service to establish the free demo connection on first use. The routing itself is unchanged (this adapter already selected the Amazee service only on that value); what changes is that the wording now says so, the README states the policy, and a test pins it. Covered by `tests/manual-provider-and-opt-in.test.ts`, which stubs `fetch` to fail the test on any amazee.ai host and asserts that expand, summarize, follow-up and health make no Amazee call with the provider unset or non-Amazee, that health provisions nothing even for a site that opted in, and that this adapter introduces no provider of its own from an object or from the environment. Requires the matching `scolta` release for the core's no-default and the removal of first-use minting from `AutoProvisioner`.
+
 ### Fixed
 
 - **`scolta-build assets` now copies the consuming project's `scolta` runtime
