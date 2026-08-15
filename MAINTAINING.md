@@ -1,4 +1,4 @@
-# MAINTAINING — scolta-next
+# Maintaining scolta-next
 
 The Next.js adapter over the `scolta` binding. Publishes to npm.
 
@@ -25,7 +25,7 @@ Trusted Publishing (OIDC), which attaches provenance automatically.
 
 **Watch out for.**
 
-- **CI currently builds scolta-node from `main` and symlinks it over the installed `scolta`.** The
+- CI currently builds scolta-node from `main` and symlinks it over the installed `scolta`. The
   registry pin resolves a published version whose CJS entry crashes at `require()`, which is exactly what
   the `cjs-build` regression test guards, and its skip condition goes true on that version so the test
   never runs. The step is a workaround with an expiry: drop it once a fixed `scolta` is published and the
